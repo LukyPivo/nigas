@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<body>
+
+<video id="video" src="nigadelnik.mp4" style="
+    position:fixed;
+    top:0;
+    left:0;
+    width:100vw;
+    height:100vh;
+    object-fit:cover;">
+</video>
+
+<div id="gameOver" style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: black;
+    color: white;
+    font-size: 48px;
+    justify-content: center;
+    align-items: center;
+    ">zasmal ses ty nigo</div>
+
+<script>
+let audioContext;
+let mediaStreamSource;
+let analyzer;
+
+async function mikrak() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        audioContext = new AudioContext();
+        mediaStreamSource = audioContext.createMediaStreamSource(stream);
+        analyzer = audioContext.createAnalyser();
+        mediaStreamSource.connect(analyzer);
+        
+        analyzer.fftSize = 256;
+        const bufferLength = analyzer.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+        
+        function checkLaughter() {
+            analyzer.getByteFrequencyData(dataArray);
+            const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+            
+            
+            if (average > 50 ) {
+                document.getElementById('gameOver').style.display = 'flex';
+                document.getElementById('video').pause();
+            }
+            
+            requestAnimationFrame(checkLaughter);
+        }
+        
+        checkLaughter();
+    } catch (err) {
+        console.error("Error accessing microphone:", err);
+    }
+}
+
+document.addEventListener("keydown", e => {
+    if (e.key === "q") {
+        let vid = document.getElementById("video");
+        vid.volume = 0.7;
+        vid.play();
+        mikrak();
+    }
+});
+</script>
+
+</body>
+</html>
